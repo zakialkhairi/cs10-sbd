@@ -23,7 +23,7 @@ api.interceptors.request.use((config) => {
 export interface LoginResponse {
   token: string;
   user?: {
-    id: string;
+    id: string | number;
     name: string;
     email: string;
   };
@@ -32,7 +32,7 @@ export interface LoginResponse {
 export interface RegisterResponse {
   message: string;
   user?: {
-    id: string;
+    id: string | number;
     name: string;
     email: string;
   };

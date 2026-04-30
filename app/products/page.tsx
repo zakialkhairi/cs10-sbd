@@ -30,8 +30,23 @@ export default function ProductsPage() {
   }, []);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    let active = true;
+
+    getProducts()
+      .then((data) => {
+        if (active) setProducts(data);
+      })
+      .catch(() => {
+        if (active) setError('Failed to load products. Please try again.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleAddToCart = (product: Product) => {
     setCart((prev) => [...prev, product]);

@@ -18,11 +18,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
   const links = [
     { href: '/', label: 'Home' },
     { href: '/products', label: 'Products' },
@@ -171,6 +166,7 @@ export default function Navbar() {
                   <Link
                     href={link.href}
                     className="block px-4 py-3 rounded-xl text-sm font-semibold transition-colors"
+                    onClick={() => setMobileOpen(false)}
                     style={{
                       color: pathname === link.href ? 'var(--color-accent)' : 'var(--color-text-secondary)',
                       background: pathname === link.href ? 'rgba(var(--color-accent-rgb), 0.08)' : 'transparent',

@@ -36,7 +36,8 @@ export default function LoginPage() {
       setTimeout(() => router.push('/products'), 600);
     } catch (err: unknown) {
       const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.message ||
+        (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.error ||
         'Login failed. Please check your credentials.';
       showToast(message, 'error');
     } finally {
