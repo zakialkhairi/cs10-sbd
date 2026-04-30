@@ -10,8 +10,29 @@ import CartDrawer from '@/components/CartDrawer';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 
+interface JwtPayload {
+  id: number;
+  role?: 'admin' | 'customer';
+}
+
+function getIsAdminFromToken() {
+  if (typeof window === 'undefined') return false;
+
+  const token = localStorage.getItem('token');
+  if (!token) return false;
+
+  try {
+    const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(atob(payload)) as JwtPayload;
+    return decoded.role === 'admin';
+  } catch {
+    return false;
+  }
+}
+
 export default function ProductsPage() {
   const { showToast } = useToast();
+  const [isAdmin] = useState(getIsAdminFromToken);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -153,47 +174,49 @@ export default function ProductsPage() {
         </motion.button>
       </div>
 
-      <motion.form
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
-        onSubmit={handleCreateProduct}
-        className="glass p-5 sm:p-6 mb-8"
-      >
-        <div className="flex flex-col lg:flex-row lg:items-end gap-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
-            <Input
-              label="Nama Produk"
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
-              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>}
-            />
-            <Input
-              label="Harga"
-              type="number"
-              min="1"
-              step="1"
-              value={productPrice}
-              onChange={(e) => setProductPrice(e.target.value)}
-              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>}
-            />
-            <Input
-              label="URL Gambar"
-              value={productImage}
-              onChange={(e) => setProductImage(e.target.value)}
-              icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
-            />
+      {isAdmin && (
+        <motion.form
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          onSubmit={handleCreateProduct}
+          className="glass p-5 sm:p-6 mb-8"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-end gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
+              <Input
+                label="Nama Produk"
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>}
+              />
+              <Input
+                label="Harga"
+                type="number"
+                min="1"
+                step="1"
+                value={productPrice}
+                onChange={(e) => setProductPrice(e.target.value)}
+                icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>}
+              />
+              <Input
+                label="URL Gambar"
+                value={productImage}
+                onChange={(e) => setProductImage(e.target.value)}
+                icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+              />
+            </div>
+            <Button type="submit" loading={savingProduct} className="lg:self-stretch">
+              Tambah Produk
+            </Button>
           </div>
-          <Button type="submit" loading={savingProduct} className="lg:self-stretch">
-            Tambah Produk
-          </Button>
-        </div>
-        {formError && (
-          <p className="mt-3 text-sm font-medium" style={{ color: '#ef4444' }}>
-            {formError}
-          </p>
-        )}
-      </motion.form>
+          {formError && (
+            <p className="mt-3 text-sm font-medium" style={{ color: '#ef4444' }}>
+              {formError}
+            </p>
+          )}
+        </motion.form>
+      )}
 
       {/* Content */}
       {loading ? (

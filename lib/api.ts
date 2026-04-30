@@ -26,6 +26,7 @@ export interface LoginResponse {
     id: string | number;
     name: string;
     email: string;
+    role: 'admin' | 'customer';
   };
 }
 
@@ -35,6 +36,7 @@ export interface RegisterResponse {
     id: string | number;
     name: string;
     email: string;
+    role: 'admin' | 'customer';
   };
 }
 

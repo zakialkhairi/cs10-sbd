@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const db = require('../database/db')
 
 const SECRET = process.env.JWT_SECRET || 'secretkey123'
+const ADMIN_EMAIL = 'zaki@gmail.com'
 
 exports.register = (req, res) => {
   const { name, email, password } = req.body
@@ -16,10 +17,13 @@ exports.register = (req, res) => {
   }
 
   const hashed = bcrypt.hashSync(password, 10)
+  const cleanEmail = email.trim().toLowerCase()
+  const cleanName = name.trim()
+  const role = cleanEmail === ADMIN_EMAIL ? 'admin' : 'customer'
 
   db.run(
-    'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-    [name.trim(), email.trim().toLowerCase(), hashed],
+    'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+    [cleanName, cleanEmail, hashed, role],
     function (err) {
       if (err) {
         return res.status(400).json({ error: 'Email already used' })
@@ -29,8 +33,9 @@ exports.register = (req, res) => {
         message: 'Register success',
         user: {
           id: this.lastID,
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
+          name: cleanName,
+          email: cleanEmail,
+          role,
         },
       })
     }
@@ -62,7 +67,7 @@ exports.login = (req, res) => {
         return res.status(400).json({ error: 'Wrong password' })
       }
 
-      const token = jwt.sign({ id: user.id }, SECRET, { expiresIn: '1d' })
+      const token = jwt.sign({ id: user.id, role: user.role }, SECRET, { expiresIn: '1d' })
 
       res.json({
         token,
@@ -70,6 +75,7 @@ exports.login = (req, res) => {
           id: user.id,
           name: user.name,
           email: user.email,
+          role: user.role,
         },
       })
     }
