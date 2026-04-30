@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import type { Product } from '@/lib/api';
+import { formatRupiah } from '@/lib/format';
 
 interface ProductCardProps {
   product: Product;
@@ -105,7 +106,7 @@ export default function ProductCard({
           style={{ borderTop: '1px solid var(--color-border)' }}
         >
           <span className="text-lg font-bold gradient-text">
-            ${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}
+            {formatRupiah(Number(product.price) || 0)}
           </span>
 
           <motion.button

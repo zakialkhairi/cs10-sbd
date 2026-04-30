@@ -64,4 +64,9 @@ export async function getProducts(): Promise<Product[]> {
   return res.data;
 }
 
+export async function createProduct(data: Pick<Product, 'name' | 'price'> & { image?: string }): Promise<Product> {
+  const res = await api.post('/products', data);
+  return res.data;
+}
+
 export default api;

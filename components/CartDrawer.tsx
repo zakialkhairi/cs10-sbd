@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Product } from '@/lib/api';
+import { formatRupiah } from '@/lib/format';
 
 interface CartDrawerProps {
   open: boolean;
@@ -113,7 +114,7 @@ export default function CartDrawer({ open, onClose, items, onRemove }: CartDrawe
                       <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
                         {item.name}
                       </p>
-                      <p className="text-sm font-semibold gradient-text">${item.price.toFixed(2)}</p>
+                      <p className="text-sm font-semibold gradient-text">{formatRupiah(item.price)}</p>
                     </div>
                     <button
                       onClick={() => onRemove?.(item.id)}
@@ -134,7 +135,7 @@ export default function CartDrawer({ open, onClose, items, onRemove }: CartDrawe
               <div className="p-6 space-y-4" style={{ borderTop: '1px solid var(--color-border)' }}>
                 <div className="flex justify-between text-sm">
                   <span style={{ color: 'var(--color-text-secondary)' }}>Total</span>
-                  <span className="font-bold text-lg gradient-text">${total.toFixed(2)}</span>
+                  <span className="font-bold text-lg gradient-text">{formatRupiah(total)}</span>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
