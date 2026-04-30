@@ -1,11 +1,11 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const db = require('../database/db')
+const pool = require('../database/db')
 
 const SECRET = process.env.JWT_SECRET || 'secretkey123'
 const ADMIN_EMAIL = 'zaki@gmail.com'
 
-exports.register = (req, res) => {
+exports.register = async (req, res) => {
   const { name, email, password } = req.body
 
   if (!name || !email || !password) {
@@ -16,68 +16,70 @@ exports.register = (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 6 characters' })
   }
 
-  const hashed = bcrypt.hashSync(password, 10)
-  const cleanEmail = email.trim().toLowerCase()
-  const cleanName = name.trim()
-  const role = cleanEmail === ADMIN_EMAIL ? 'admin' : 'customer'
+  const clean_email = email.trim().toLowerCase()
+  const clean_name = name.trim()
+  const hashed_password = bcrypt.hashSync(password, 10)
+  const role = clean_email === ADMIN_EMAIL ? 'admin' : 'customer'
 
-  db.run(
-    'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-    [cleanName, cleanEmail, hashed, role],
-    function (err) {
-      if (err) {
-        return res.status(400).json({ error: 'Email already used' })
-      }
+  try {
+    const result = await pool.query(
+      `
+        INSERT INTO users (name, email, password, role)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, name, email, role
+      `,
+      [clean_name, clean_email, hashed_password, role]
+    )
 
-      res.status(201).json({
-        message: 'Register success',
-        user: {
-          id: this.lastID,
-          name: cleanName,
-          email: cleanEmail,
-          role,
-        },
-      })
+    res.status(201).json({
+      message: 'Register success',
+      user: result.rows[0],
+    })
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(400).json({ error: 'Email already used' })
     }
-  )
+
+    res.status(500).json({ error: err.message })
+  }
 }
 
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
   const { email, password } = req.body
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' })
   }
 
-  db.get(
-    'SELECT * FROM users WHERE email = ?',
-    [email.trim().toLowerCase()],
-    (err, user) => {
-      if (err) {
-        return res.status(500).json({ error: err.message })
-      }
+  try {
+    const result = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email.trim().toLowerCase()]
+    )
+    const user = result.rows[0]
 
-      if (!user) {
-        return res.status(400).json({ error: 'User not found' })
-      }
-
-      const valid = bcrypt.compareSync(password, user.password)
-
-      if (!valid) {
-        return res.status(400).json({ error: 'Wrong password' })
-      }
-
-      const token = jwt.sign({ id: user.id, role: user.role }, SECRET, { expiresIn: '1d' })
-
-      res.json({
-        token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      })
+    if (!user) {
+      return res.status(400).json({ error: 'User not found' })
     }
-  )
+
+    const valid_password = bcrypt.compareSync(password, user.password)
+
+    if (!valid_password) {
+      return res.status(400).json({ error: 'Wrong password' })
+    }
+
+    const token = jwt.sign({ id: user.id, role: user.role }, SECRET, { expiresIn: '1d' })
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 }

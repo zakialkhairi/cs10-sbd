@@ -1,22 +1,22 @@
 const bcrypt = require('bcrypt')
-const db = require('./db')
+const pool = require('./db')
 
 const ADMIN_EMAIL = 'zaki@gmail.com'
 const ADMIN_PASSWORD = 'zaki123'
 
-db.serialize(() => {
-  db.run(`
+async function init_database() {
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS products (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT,
       price INTEGER,
       image TEXT
     )
   `)
 
-  db.run(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
@@ -24,49 +24,43 @@ db.serialize(() => {
     )
   `)
 
-  db.run('ALTER TABLE users ADD COLUMN role TEXT DEFAULT "customer"', (err) => {
-    if (err && !err.message.includes('duplicate column name')) {
-      console.error('DB migration error:', err)
-    }
-  })
+  await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'customer'
+  `)
 
-  db.run('UPDATE users SET role = "customer" WHERE role IS NULL')
+  await pool.query(`
+    UPDATE users
+    SET role = 'customer'
+    WHERE role IS NULL
+  `)
 
-  const adminPassword = bcrypt.hashSync(ADMIN_PASSWORD, 10)
-  db.get('SELECT id FROM users WHERE email = ?', [ADMIN_EMAIL], (err, user) => {
-    if (err) {
-      console.error('Admin seed error:', err)
-      return
-    }
+  const admin_password = bcrypt.hashSync(ADMIN_PASSWORD, 10)
 
-    if (user) {
-      db.run(
-        'UPDATE users SET name = ?, password = ?, role = ? WHERE email = ?',
-        ['Zaki', adminPassword, 'admin', ADMIN_EMAIL]
-      )
-      return
-    }
+  await pool.query(
+    `
+      INSERT INTO users (name, email, password, role)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (email)
+      DO UPDATE SET
+        name = EXCLUDED.name,
+        password = EXCLUDED.password,
+        role = EXCLUDED.role
+    `,
+    ['Zaki', ADMIN_EMAIL, admin_password, 'admin']
+  )
 
-    db.run(
-      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-      ['Zaki', ADMIN_EMAIL, adminPassword, 'admin']
-    )
-  })
+  const product_count = await pool.query('SELECT COUNT(*) AS count FROM products')
 
-  db.get('SELECT COUNT(*) as count FROM products', (err, row) => {
-    if (err) {
-      console.error('DB init error:', err)
-      return
-    }
+  if (Number(product_count.rows[0].count) === 0) {
+    await pool.query(`
+      INSERT INTO products (name, price, image)
+      VALUES
+        ('Sepatu Nike', 500000, ''),
+        ('Hoodie Oversize', 250000, ''),
+        ('Tas Sling Bag', 150000, '')
+    `)
+  }
+}
 
-    if (!row || row.count === 0) {
-      db.run(`
-        INSERT INTO products (name, price, image)
-        VALUES
-          ('Sepatu Nike', 500000, ''),
-          ('Hoodie Oversize', 250000, ''),
-          ('Tas Sling Bag', 150000, '')
-      `)
-    }
-  })
-})
+module.exports = init_database

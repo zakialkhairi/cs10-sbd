@@ -1,14 +1,24 @@
-const sqlite3 = require('sqlite3').verbose()
-const path = require('path')
+const { Pool } = require('pg')
 
-const dbPath = path.resolve(__dirname, 'database.db')
+const connection_string = process.env.DATABASE_URL
 
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('DB Error:', err)
-  } else {
-    console.log('SQLite connected')
-  }
+if (!connection_string) {
+  throw new Error('DATABASE_URL is required in .env')
+}
+
+const pool = new Pool({
+  connectionString: connection_string,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 })
 
-module.exports = db
+pool.on('connect', () => {
+  console.log('Connected to NeonDB')
+})
+
+pool.on('error', (err) => {
+  console.error('NeonDB error:', err.message)
+})
+
+module.exports = pool

@@ -38,6 +38,7 @@ export default function LoginPage() {
       const message =
         (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.message ||
         (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.error ||
+        (err instanceof Error ? err.message : '') ||
         'Login failed. Please check your credentials.';
       showToast(message, 'error');
     } finally {

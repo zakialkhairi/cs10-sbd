@@ -40,6 +40,7 @@ export default function RegisterPage() {
       const message =
         (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.message ||
         (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.error ||
+        (err instanceof Error ? err.message : '') ||
         'Registration failed. Please try again.';
       showToast(message, 'error');
     } finally {

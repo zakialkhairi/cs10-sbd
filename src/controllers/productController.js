@@ -1,36 +1,34 @@
-const db = require('../database/db')
+const pool = require('../database/db')
 
-exports.getProducts = (req, res) => {
-  db.all('SELECT * FROM products', [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message })
-    }
-    res.json(rows)
-  })
+exports.getProducts = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM products ORDER BY id ASC')
+    res.json(result.rows)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 }
 
-exports.createProduct = (req, res) => {
+exports.createProduct = async (req, res) => {
   const { name, price, image } = req.body
-  const numericPrice = Number(price)
+  const numeric_price = Number(price)
 
-  if (!name || !Number.isFinite(numericPrice) || numericPrice <= 0) {
+  if (!name || !Number.isFinite(numeric_price) || numeric_price <= 0) {
     return res.status(400).json({ error: 'Name and valid price are required' })
   }
 
-  db.run(
-    'INSERT INTO products (name, price, image) VALUES (?, ?, ?)',
-    [name.trim(), Math.round(numericPrice), image?.trim() || ''],
-    function (err) {
-      if (err) {
-        return res.status(500).json({ error: err.message })
-      }
+  try {
+    const result = await pool.query(
+      `
+        INSERT INTO products (name, price, image)
+        VALUES ($1, $2, $3)
+        RETURNING id, name, price, image
+      `,
+      [name.trim(), Math.round(numeric_price), image?.trim() || '']
+    )
 
-      res.status(201).json({
-        id: this.lastID,
-        name: name.trim(),
-        price: Math.round(numericPrice),
-        image: image?.trim() || '',
-      })
-    }
-  )
+    res.status(201).json(result.rows[0])
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 }
