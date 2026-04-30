@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import type { Product } from '@/lib/api';
 import { formatRupiah } from '@/lib/format';
 
@@ -12,6 +13,7 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ open, onClose, items, onRemove }: CartDrawerProps) {
+  const router = useRouter();
   const total = items.reduce((sum, item) => sum + (item.price || 0), 0);
 
   return (
@@ -140,6 +142,7 @@ export default function CartDrawer({ open, onClose, items, onRemove }: CartDrawe
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
+                  onClick={() => router.push('/login')}
                   className="w-full py-3.5 rounded-2xl gradient-btn font-semibold text-sm cursor-pointer"
                 >
                   Checkout
