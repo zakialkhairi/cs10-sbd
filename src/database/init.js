@@ -10,8 +10,14 @@ async function init_database() {
       id SERIAL PRIMARY KEY,
       name TEXT,
       price INTEGER,
+      stock INTEGER DEFAULT 0,
       image TEXT
     )
+  `)
+
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 0
   `)
 
   await pool.query(`
@@ -54,11 +60,12 @@ async function init_database() {
 
   if (Number(product_count.rows[0].count) === 0) {
     await pool.query(`
-      INSERT INTO products (name, price, image)
+      INSERT INTO products (name, price, stock, image)
       VALUES
-        ('Sepatu Nike', 500000, ''),
-        ('Hoodie Oversize', 250000, ''),
-        ('Tas Sling Bag', 150000, '')
+        ('Laptop', 1000000, 10, ''),
+        ('Mouse', 50000, 100, ''),
+        ('Keyboard', 150000, 50, ''),
+        ('Monitor', 300000, 20, '')
     `)
   }
 }

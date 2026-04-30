@@ -41,31 +41,24 @@ export default function ProductCard({
             background: 'linear-gradient(to top, var(--color-bg), transparent, transparent)',
           }}
         />
-        {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <svg
-              className="w-16 h-16"
-              style={{ color: 'var(--color-text-muted)', opacity: 0.3 }}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-        )}
+        <img
+          src={product.image || `/images/${product.name.toLowerCase().replace(/\s+/g, '-')}.png`}
+          alt={product.name}
+          loading="lazy"
+          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            // Optionally set to a default placeholder or hide
+            const parent = e.currentTarget.parentElement;
+            if (parent) {
+              e.currentTarget.style.display = 'none';
+              const svg = document.createElement('div');
+              svg.className = 'w-full h-full flex items-center justify-center';
+              svg.innerHTML = `<svg class="w-16 h-16" style="color: var(--color-text-muted); opacity: 0.3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`;
+              parent.appendChild(svg);
+            }
+          }}
+        />
 
         {/* Category badge */}
         {product.category && (
@@ -97,6 +90,11 @@ export default function ProductCard({
               style={{ color: 'var(--color-text-muted)' }}
             >
               {product.description}
+            </p>
+          )}
+          {product.stock !== undefined && (
+            <p className="mt-2 text-xs font-medium" style={{ color: 'var(--color-accent)' }}>
+              Sisa Stok: {product.stock}
             </p>
           )}
         </div>

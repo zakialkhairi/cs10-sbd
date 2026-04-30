@@ -24,6 +24,7 @@ export default function RegisterPage() {
     if (!email) errs.email = 'Email is required';
     if (!password) errs.password = 'Password is required';
     else if (password.length < 6) errs.password = 'Minimum 6 characters';
+    
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };

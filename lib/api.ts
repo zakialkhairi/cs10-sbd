@@ -1,31 +1,7 @@
 import axios from 'axios';
 
-function getApiUrl() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  if (!apiUrl) {
-    throw new Error('NEXT_PUBLIC_API_URL is not configured');
-  }
-
-  return apiUrl;
-}
-
-async function readJsonResponse<T>(res: Response): Promise<T> {
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    const message =
-      (data as { message?: string; error?: string }).message ||
-      (data as { message?: string; error?: string }).error ||
-      'Request failed';
-    throw new Error(message);
-  }
-
-  return data as T;
-}
-
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -47,45 +23,29 @@ api.interceptors.request.use((config) => {
 export interface LoginResponse {
   token: string;
   user?: {
-    id: string | number;
+    id: string;
     name: string;
     email: string;
-    role: 'admin' | 'customer';
   };
 }
 
 export interface RegisterResponse {
   message: string;
   user?: {
-    id: string | number;
+    id: string;
     name: string;
     email: string;
-    role: 'admin' | 'customer';
   };
 }
 
 export async function loginUser(email: string, password: string): Promise<LoginResponse> {
-  const res = await fetch(`${getApiUrl()}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email, password }),
-  });
-
-  return readJsonResponse<LoginResponse>(res);
+  const res = await api.post('/auth/login', { email, password });
+  return res.data;
 }
 
 export async function registerUser(name: string, email: string, password: string): Promise<RegisterResponse> {
-  const res = await fetch(`${getApiUrl()}/auth/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ name, email, password }),
-  });
-
-  return readJsonResponse<RegisterResponse>(res);
+  const res = await api.post('/auth/register', { name, email, password });
+  return res.data;
 }
 
 // ─── Products ───
@@ -94,6 +54,7 @@ export interface Product {
   id: string | number;
   name: string;
   price: number;
+  stock?: number;
   image?: string;
   description?: string;
   category?: string;
@@ -101,12 +62,14 @@ export interface Product {
 
 export async function getProducts(): Promise<Product[]> {
   const res = await api.get('/products');
-  return res.data;
+  return res.data.payload || res.data;
 }
 
-export async function createProduct(data: Pick<Product, 'name' | 'price'> & { image?: string }): Promise<Product> {
+export async function createProduct(data: Pick<Product, 'name' | 'price'> & { image?: string, stock?: number }): Promise<Product> {
   const res = await api.post('/products', data);
-  return res.data;
+  return res.data.payload || res.data;
 }
 
 export default api;
+
+
