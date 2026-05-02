@@ -11,7 +11,7 @@ interface ToastData {
   type: ToastType;
 }
 
-interface ToastContextValue {
+interface ToastContextValue { 
   showToast: (message: string, type?: ToastType) => void;
 }
 
